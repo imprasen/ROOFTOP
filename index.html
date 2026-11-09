@@ -642,8 +642,9 @@
     <div class="sun-lower">
       <div class="card sun-ctrl" style="padding:20px 24px">
         <div class="sun-scrub-row">
+          <button type="button" class="pill-btn active" id="sunPlayBtn" aria-pressed="true" title="Toggle continuous 08:00 to 16:00 solar playback" style="min-width:94px">❚❚ Pause</button>
           <span class="sun-time-pill" id="sunTimeDisp">08:00</span>
-          <input type="range" class="rng" id="sunScrubber" min="8" max="16" step="0.25" value="8" style="flex:1;min-width:140px" aria-label="Time of day solar scrubber">
+          <input type="range" class="rng" id="sunScrubber" min="8" max="16" step="0.01" value="8" style="flex:1;min-width:130px" aria-label="Time of day solar scrubber">
           <span class="sun-badge measured" id="sunModeBadge">Survey slice</span>
         </div>
         <div class="btn-row" id="sunPresetRow">
@@ -1264,27 +1265,41 @@
   }
 
   function formatHour(h) {
-    const hh = Math.floor(h);
-    const mm = Math.round((h - hh) * 60);
+    const totalMins = Math.round(h * 60);
+    const hh = Math.floor(totalMins / 60);
+    const mm = totalMins % 60;
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
   const sunScrubber = document.getElementById('sunScrubber');
+  const sunPlayBtn = document.getElementById('sunPlayBtn');
   const sunTimeDisp = document.getElementById('sunTimeDisp');
   const sunModeBadge = document.getElementById('sunModeBadge');
   const sunPresetBtns = Array.from(document.querySelectorAll('#sunPresetRow button'));
   const sunRows = Array.from(document.querySelectorAll('#sunTable tr.sun-row'));
   const sunJumpMapBtn = document.getElementById('sunJumpMapBtn');
+  const dialSunRay = document.getElementById('dialSunRay');
+  const dialSunDot = document.getElementById('dialSunDot');
+  const dialShadowCone = document.getElementById('dialShadowCone');
+  const dialAzVal = document.getElementById('dialAzVal');
+  const dialAltVal = document.getElementById('dialAltVal');
+  const dialShadDir = document.getElementById('dialShadDir');
+  const dialShadLen = document.getElementById('dialShadLen');
+
+  let sunHour = 8;
+  let lastJumpMode = '';
 
   function updateSun(hour) {
     const s = interpSun(hour);
-    sunScrubber.value = s.hour;
+    sunHour = s.hour;
+    sunScrubber.value = s.hour.toFixed(2);
     sunTimeDisp.textContent = formatHour(s.hour);
-    sunModeBadge.textContent = s.measured ? 'Survey slice' : 'Interpolated';
-    sunModeBadge.classList.toggle('measured', s.measured);
+    const nearSlice = sunPoints.some(p => Math.abs(p.h - s.hour) < 0.08);
+    sunModeBadge.textContent = nearSlice ? 'Survey slice' : 'Interpolated';
+    sunModeBadge.classList.toggle('measured', nearSlice);
 
-    sunPresetBtns.forEach(b => b.classList.toggle('active', Math.abs(Number(b.dataset.hour) - s.hour) < 0.01));
-    sunRows.forEach(r => r.classList.toggle('is-active', Math.abs(Number(r.dataset.hour) - s.hour) < 0.01));
+    sunPresetBtns.forEach(b => b.classList.toggle('active', Math.abs(Number(b.dataset.hour) - s.hour) < 0.12));
+    sunRows.forEach(r => r.classList.toggle('is-active', Math.abs(Number(r.dataset.hour) - s.hour) < 0.12));
 
     // Chart coordinates: x = 44..446 over 08..16; alt y = 176 - (alt/90)*160; azi y = 176 - (azi/360)*160
     const x = 44 + ((s.hour - 8) / 8) * 402;
@@ -1303,10 +1318,10 @@
     const sunRad = (s.az - 90) * Math.PI / 180;
     const sx = 90 + Math.cos(sunRad) * 62;
     const sy = 90 + Math.sin(sunRad) * 62;
-    document.getElementById('dialSunRay').setAttribute('x2', sx.toFixed(1));
-    document.getElementById('dialSunRay').setAttribute('y2', sy.toFixed(1));
-    document.getElementById('dialSunDot').setAttribute('cx', sx.toFixed(1));
-    document.getElementById('dialSunDot').setAttribute('cy', sy.toFixed(1));
+    dialSunRay.setAttribute('x2', sx.toFixed(1));
+    dialSunRay.setAttribute('y2', sy.toFixed(1));
+    dialSunDot.setAttribute('cx', sx.toFixed(1));
+    dialSunDot.setAttribute('cy', sy.toFixed(1));
 
     const shadowAz = (s.az + 180) % 360;
     const shadRad = (shadowAz - 90) * Math.PI / 180;
@@ -1319,31 +1334,95 @@
     const b2x = 90 - Math.cos(perp) * 11, b2y = 90 - Math.sin(perp) * 11;
     const t1x = tipX + Math.cos(perp) * 14, t1y = tipY + Math.sin(perp) * 14;
     const t2x = tipX - Math.cos(perp) * 14, t2y = tipY - Math.sin(perp) * 14;
-    document.getElementById('dialShadowCone').setAttribute('points',
+    dialShadowCone.setAttribute('points',
       `${b1x.toFixed(1)},${b1y.toFixed(1)} ${t1x.toFixed(1)},${t1y.toFixed(1)} ${t2x.toFixed(1)},${t2y.toFixed(1)} ${b2x.toFixed(1)},${b2y.toFixed(1)}`);
 
-    document.getElementById('dialAzVal').textContent = `${s.az.toFixed(1)}° (${compassDir(s.az)})`;
-    document.getElementById('dialAltVal').textContent = `${s.alt.toFixed(1)}°`;
-    document.getElementById('dialShadDir').textContent = `${shadowAz.toFixed(1)}° (${compassDir(shadowAz)})`;
-    document.getElementById('dialShadLen').textContent = `${ratio.toFixed(2)}×`;
+    dialAzVal.textContent = `${s.az.toFixed(1)}° (${compassDir(s.az)})`;
+    dialAltVal.textContent = `${s.alt.toFixed(1)}°`;
+    dialShadDir.textContent = `${shadowAz.toFixed(1)}° (${compassDir(shadowAz)})`;
+    dialShadLen.textContent = `${ratio.toFixed(2)}×`;
 
-    if (Math.abs(s.hour - 8) < 0.1) {
-      sunJumpMapBtn.textContent = 'Inspect 08:00 Shadow Map (Fig 3) →';
-      sunJumpMapBtn.dataset.layer = 'shadow';
-    } else {
-      sunJumpMapBtn.textContent = 'Inspect Combined Sunlight (Fig 8) →';
-      sunJumpMapBtn.dataset.layer = 'sunlight';
+    const jumpMode = Math.abs(s.hour - 8) < 0.15 ? 'shadow' : 'sunlight';
+    if (jumpMode !== lastJumpMode) {
+      lastJumpMode = jumpMode;
+      if (jumpMode === 'shadow') {
+        sunJumpMapBtn.textContent = 'Inspect 08:00 Shadow Map (Fig 3) →';
+        sunJumpMapBtn.dataset.layer = 'shadow';
+      } else {
+        sunJumpMapBtn.textContent = 'Inspect Combined Sunlight (Fig 8) →';
+        sunJumpMapBtn.dataset.layer = 'sunlight';
+      }
     }
   }
 
-  sunScrubber.addEventListener('input', () => updateSun(Number(sunScrubber.value)));
-  sunPresetBtns.forEach(b => b.addEventListener('click', () => updateSun(Number(b.dataset.hour))));
-  sunRows.forEach(r => r.addEventListener('click', () => updateSun(Number(r.dataset.hour))));
+  let sunPlaying = false, sunRaf = 0, sunLastTs = 0, sunDwellMs = 0, sunResetPending = false;
+  function syncPlayBtn() {
+    sunPlayBtn.classList.toggle('active', sunPlaying);
+    sunPlayBtn.setAttribute('aria-pressed', String(sunPlaying));
+    sunPlayBtn.textContent = sunPlaying ? '❚❚ Pause' : '▶ Play';
+  }
+  function stopAutoCycle() {
+    sunResetPending = false;
+    if (!sunPlaying) return;
+    sunPlaying = false;
+    if (sunRaf) cancelAnimationFrame(sunRaf);
+    sunRaf = 0;
+    syncPlayBtn();
+  }
+  function tickSun(ts) {
+    if (!sunPlaying) return;
+    if (!sunLastTs || ts - sunLastTs > 200) {
+      sunLastTs = ts;
+      sunRaf = requestAnimationFrame(tickSun);
+      return;
+    }
+    const dt = ts - sunLastTs;
+    sunLastTs = ts;
+    if (sunDwellMs > 0) {
+      sunDwellMs -= dt;
+      sunRaf = requestAnimationFrame(tickSun);
+      return;
+    }
+    if (sunResetPending) {
+      sunResetPending = false;
+      updateSun(8);
+      sunDwellMs = 700;
+    } else {
+      const nextHour = sunHour + (dt / 1000) * 0.65; // ~12.3s sweep from 08:00 to 16:00
+      if (nextHour >= 16) {
+        updateSun(16);
+        sunDwellMs = 900; // pause briefly at 16:00 before looping to 08:00
+        sunResetPending = true;
+      } else {
+        updateSun(nextHour);
+      }
+    }
+    sunRaf = requestAnimationFrame(tickSun);
+  }
+  function startAutoCycle() {
+    if (sunPlaying) return;
+    sunResetPending = false;
+    if (sunHour >= 15.98) updateSun(8);
+    sunPlaying = true;
+    sunLastTs = 0;
+    sunDwellMs = 600;
+    syncPlayBtn();
+    sunRaf = requestAnimationFrame(tickSun);
+  }
+
+  sunPlayBtn.addEventListener('click', () => {
+    if (sunPlaying) stopAutoCycle();
+    else startAutoCycle();
+  });
+  sunScrubber.addEventListener('input', () => { stopAutoCycle(); updateSun(Number(sunScrubber.value)); });
+  sunPresetBtns.forEach(b => b.addEventListener('click', () => { stopAutoCycle(); updateSun(Number(b.dataset.hour)); }));
+  sunRows.forEach(r => r.addEventListener('click', () => { stopAutoCycle(); updateSun(Number(r.dataset.hour)); }));
   sunJumpMapBtn.addEventListener('click', () => jumpToWorkbench(sunJumpMapBtn.dataset.layer || 'shadow'));
 
   function bindSvgScrub(svg) {
     let dragging = false;
     function scrubFromEvent(e) {
+      stopAutoCycle();
       const rect = svg.getBoundingClientRect();
       const svgX = ((e.clientX - rect.left) / rect.width) * 460;
       const hr = 8 + ((svgX - 44) / 402) * 8;
@@ -1358,6 +1437,11 @@
   bindSvgScrub(altSvg);
   bindSvgScrub(aziSvg);
   updateSun(8);
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    startAutoCycle();
+  } else {
+    syncPlayBtn();
+  }
 
   /* 4. Classification Scheme & Band Inspector */
   const classData = [
