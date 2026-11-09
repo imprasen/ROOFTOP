@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rooftop Solar Suitability Dashboard — Kamrup Metro, Assam</title>
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="logo/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="logo/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="logo/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -52,7 +56,8 @@
     max-width: 1280px; margin: 0 auto; padding: 12px 28px;
     display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
   }
-  .brand { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--solar); white-space: nowrap; }
+  .brand { display: inline-flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--solar); white-space: nowrap; text-decoration: none; }
+  .brand-mark { display: block; height: 42px; width: auto; background: #fff; border-radius: 6px; padding: 1px 2px; border: 1px solid rgba(255,255,255,.22); }
   .nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
   .nav a {
     font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
@@ -206,8 +211,10 @@
   .areacard table td { padding: 9px 10px; font-size: 13px; }
   tr.tot td { border-bottom: 0; border-top: 1px solid var(--line-strong); color: var(--text); font-weight: 500; }
   .footnote { font-size: 12.5px; color: var(--dimmer); line-height: 1.6; margin: 16px 0 0; max-width: 90ch; }
-  footer { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  footer { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
     font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dimmer); }
+  .fbrand { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .flogo { display: block; height: 52px; width: auto; background: #fff; border-radius: 6px; padding: 2px 3px; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes drawIn { from { stroke-dasharray: 0 1000; } }
@@ -228,6 +235,8 @@
     .wrow { grid-template-columns: 12px 1fr 56px; }
     .wrow .wbar { display: none; }
     header.hero { padding-top: 34px; }
+    .brand { font-size: 11px; letter-spacing: .1em; gap: 9px; white-space: normal; }
+    .brand-mark { height: 32px; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
@@ -239,7 +248,10 @@
 
 <div class="bar">
   <div class="bar-in">
-    <span class="brand">Solar Suitability · Kamrup Metro</span>
+    <a class="brand" href="#">
+      <img class="brand-mark" src="logo/logo.png" alt="RC Hobbytech Solutions Pvt. Ltd.">
+      <span>Solar Suitability · Kamrup Metro</span>
+    </a>
     <nav class="nav">
       <a href="#criteria">Criteria</a>
       <a href="#sun">Sun geometry</a>
@@ -523,7 +535,10 @@
   </section>
 
   <footer>
-    <span>Rooftop Solar Suitability Analysis · Assam</span>
+    <span class="fbrand">
+      <img class="flogo" src="logo/logo.png" alt="RC Hobbytech Solutions Pvt. Ltd.">
+      <span>RC Hobbytech Solutions Pvt. Ltd. · Rooftop Solar Suitability · Assam</span>
+    </span>
     <span>Drone DSM + orthomosaic · weighted overlay · 4 criteria</span>
   </footer>
 </div>
